@@ -1,8 +1,21 @@
 <!DOCTYPE html>
+
+{% load leaflet_tags %}
 <html>
 
     <head>
-    	<title>Safe Route</title>
+        <title>Safe Route</title>
+        {% leaflet_js %}
+        {% leaflet_css %}
+        <style>
+        	.leaflet-container { height: 100%; width: 100%; }
+        </style>
+        <script type= 'text/javascript'>
+        	function map_init_basic (map, options) {
+        		L.marker([50.5,30,5]).addTo(map)
+        		L.marker([41.5,-87.5]).addTo(map)
+        	}
+        </script>
     </head>
 
     <body>
@@ -11,8 +24,6 @@
             Please enter in your desired start and finish address within the City of Chicago to see the safest route you can take between them. <br />
             <strong>{{ route }}</strong>
         </p> 
+        {% leaflet_map "map" callback="window.map_init_basic" %}
     </body>
-
-
-
 </html>

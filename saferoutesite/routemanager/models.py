@@ -1,4 +1,5 @@
 from django.db import models
+from djgeojson.fields import PointField
 
 class Address(models.Model):
     address_one = models.CharField("Address Line 1", max_length=200)
@@ -6,6 +7,7 @@ class Address(models.Model):
     city_name = models.CharField("City", max_length=50)
     state_abbr = models.CharField("State", max_length=3)
     zip_code = models.CharField("Zip", max_length=10)
+    spot = PointField()
 
     
     def __str__(self):
