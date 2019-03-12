@@ -49,7 +49,7 @@ def plot_route(request):
          #   if address_form.start_zip not in CHICAGO_ZIPS:
          #       route_info['end_zip']= 'Please enter in a valid ending zipcode.'
              #else:
-            route = [[41.7952, -87.5964],[41.7917, -87.5964]]
+            route = [[41.7952, -87.5964],[41.7917, -87.5964],[41.9405, -87.6390]]
     route_info['route'] = route
     route_info['address_form'] = address_form
 

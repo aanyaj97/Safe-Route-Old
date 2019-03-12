@@ -13,11 +13,11 @@
         <script type= 'text/javascript'>
             var route_list = {{ route }}
             function map_init_basic(map, options) {
-                var end_address = route_list.pop()
-                map.fitBounds([route_list[0], end_address])
                 L.marker(route_list[0]).addTo(map)
                 L.polyline(route_list).addTo(map)
+                var end_address = route_list.pop()
                 L.marker(end_address).addTo(map)
+                map.fitBounds([route_list[0], end_address])
             }
         </script>
 
