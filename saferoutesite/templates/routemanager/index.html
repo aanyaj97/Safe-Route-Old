@@ -2,28 +2,40 @@
 
 {% load leaflet_tags %}
 <html>
-
     <head>
         <title>Safe Route</title>
         {% leaflet_js %}
         {% leaflet_css %}
+        <link rel="stylesheet" type="text/css" href="/style/main.css" />
         <style>
-        	.leaflet-container { height: 100%; width: 100%; }
+            .leaflet-container { height: 100%; width: 100%; }
         </style>
         <script type= 'text/javascript'>
-        	function map_init_basic (map, options) {
-        		L.marker([50.5,30,5]).addTo(map)
-        		L.marker([41.5,-87.5]).addTo(map)
-        	}
+            var route_list = {{ route }}
+            function map_init_basic(map, options) {
+                L.marker(route_list[0]).addTo(map)
+                L.polyline(route_list).addTo(map)
+                var end_address = route_list.pop()
+                L.marker(end_address).addTo(map)
+                map.fitBounds([route_list[0], end_address])
+            }
         </script>
+
     </head>
 
     <body>
         <h1> Welcome to our CMSC 122 Project: Safe-Route. </h1>
         <p>
             Please enter in your desired start and finish address within the City of Chicago to see the safest route you can take between them. <br />
-            <strong>{{ route }}</strong>
         </p> 
+        <div class= "frame">
+        <form method="get">
+            <table class="address">
+                {{ address_form }}
+            </table>
+                <input type="submit" value="Submit" />
+        </form>
+        </div>
         {% leaflet_map "map" callback="window.map_init_basic" %}
     </body>
 </html>

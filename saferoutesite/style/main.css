@@ -1,0 +1,24 @@
+p {
+	font-family: Arial;
+}
+
+
+div.frame {
+    margin: 5px;
+}
+
+
+input.query {
+    font-size: 12px;
+}
+
+
+table.form {
+    text-align: left;
+}
+
+
+table.form input#id_query {
+    font-size: 12px;
+}
+
