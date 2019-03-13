@@ -1,13 +1,8 @@
-
-# coding: utf-8
-
-# In[ ]:
-
-
 import osmnx as ox
 import networkx as nx
 import geopy.geocoders
 from geopy.geocoders import Nominatim
+from SQLRequest3 import Regression_List 
 
 #sample_end_address = '5807 S Woodlawn Ave'
 #sample_start_address = '5481 S Maryland Ave'
@@ -47,31 +42,34 @@ def get_bounding_box(start_coord, end_coord):
 
 def get_graph(n_lat, s_lat, e_lon, w_lon): 
     
-    B = ox.core.graph_from_bbox(n_lat, s_lat, e_lon, w_lon, network_type= 'walk', simplify=True,                                 retain_all=False, truncate_by_edge=False, name='bounded',                                 timeout=180, memory=None, max_query_area_size=2500000000,                                 clean_periphery=True, infrastructure='way["highway"]', custom_filter=None)
+    B = ox.core.graph_from_bbox(n_lat, s_lat, e_lon, w_lon, network_type= 'walk', simplify=True, \
+                                retain_all=False, truncate_by_edge=False, name='bounded', \
+                                timeout=180, memory=None, max_query_area_size=2500000000, \
+                                clean_periphery=True, infrastructure='way["highway"]', custom_filter=None)
     
     B_undirected = ox.save_load.get_undirected(B)
     
     return B_undirected
-                           
 
-def update_edge_lengths(G, edges, scores):
-    
-    for start, end, attrs in edges:
+
+def update_edge_lengths(G, scores):
+
+    set_edge_dict = {}
+    new_attrs = {}
+    for start, end, attrs in list(G.edges(data = True)):
         length = attrs['length']
-        start_coord = (G.nodes[start]['x'], G.nodes[start]['y'])
-        end_coord = (G.nodes[end]['x'], G.nodes[end]['y'])
-        if start_coord not in scores:
-            continue
-        if end_coord not in scores:
-            continue
-        score = scores[(start_coord, end_coord)]
+        score = scores.get(edge_to_latlon_pair(G, (start, end)), 10**12)
         weight = score * length
-        attrs['length'] = weight
-        
-        
-def get_path(start_coord, end_coord, G, edges, nodes, scores):
+        set_edge_dict[(start, end,0)] = {'length': weight}
     
-    update_edge_lengths(G, edges, scores)
+    nx.set_edge_attributes(G, set_edge_dict)
+
+
+        
+        
+def get_path(start_coord, end_coord, G, nodes, scores):
+    
+    update_edge_lengths(G, scores)
 
     #find closest start_nodes
     s_min_lon_dist = 100
@@ -107,7 +105,7 @@ def plot_graph(path, G):
     nx.draw_networkx_nodes(G,pos,nodelist=path,node_color='r')
     nx.draw_networkx_edges(G,pos=pos, edgelist = h.edges())
 
-def go(start_address, end_address, scores):
+def go(start_address, end_address, temp, precip, date, hour):
 
     start_coord, end_coord = get_coordinates(start_address, end_address)
     if start_coord == None or end_coord == None:
@@ -117,11 +115,33 @@ def go(start_address, end_address, scores):
     G = get_graph(n_lat, s_lat, e_lon, w_lon)
     nodes = list(G.nodes(data = True))
     edges = [(start, end, attrs) for (start, end, attrs) in G.edges(data = True) if 'name' in attrs.keys()]
-                           
-    scores = None
+    
+    node_dic = dict(G.nodes(data = True))
+    edges_lst = [edge_to_latlon_pair(G, edge) for edge in edges]
+    #Regression_List(list_of_blocks, temp, precip, t_sens, p_sens, date, time_low, time_up) 
+    t_sens = 8
+    p_sens = precip
+    time_low = hour - 1
+    time_up = hour + 2
+    scores = Regression_List(edges_lst, temp, precip, t_sens, p_sens, date, time_low, time_up)
+    #scores = Regression_List(edges_lst, 70, 0, 8, 1, '2019-02-26', 20, 24)
     #scores = get score dictionary from G or use sample from google docs
     
-    path = get_path(start_coord, end_coord, G, edges, nodes, scores)
-    return path
+    path = get_path(start_coord, end_coord, G, nodes, scores)
     
+    path_coords = []
+    for node in path:
+        coord_list = []
+        lat = G.nodes[node]['y']
+        lon = G.nodes[node]['x']
+        coord_list = [lat, lon]
+        path_coords.append(coord_list)
 
+    return path_coords
+
+def edge_to_latlon_pair(G, edge):
+    node1 = G.nodes[edge[0]]
+    node2 = G.nodes[edge[1]]
+    n1 = (node1['y'], node1['x'])
+    n2 = (node2['y'], node2['x'])
+    return ((n1),(n2))
