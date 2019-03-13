@@ -4,12 +4,18 @@ import geopy.geocoders
 from geopy.geocoders import Nominatim
 from SQLRequest3 import Regression_List 
 from current_weather import get_current_weather
-
-#sample_end_address = '5807 S Woodlawn Ave'
-#sample_start_address = '5481 S Maryland Ave'
    
 def get_coordinates(start_address, end_address):
     '''
+    Obtain (latitude, longitude) pairs from desired starting and ending addresses
+    
+    Inputs:
+      start_address (string): the starting point in the route
+      end_address (string): the destination of the route
+      
+    Output:
+      (tuple of tuples of floats): the coordinate pairs for the starting and
+          ending addresses
     '''
     geolocator = Nominatim(user_agent="saferoute", format_string="%s, Chicago IL")
     start_loc = geolocator.geocode(start_address)
@@ -18,8 +24,20 @@ def get_coordinates(start_address, end_address):
     end_coord = (end_loc.latitude, end_loc.longitude)
     return start_coord, end_coord
 
+
 def get_bounding_box(start_coord, end_coord):
     '''
+    Find coordinates representing the edges of the bounding box for the route
+    
+    Inputs:
+      start_coord (tuple of floats): the coordinates of the starting point in
+          the route
+      end_coord (tuple of floats): the coordinates of the destination of the 
+          route
+     
+    Output:
+        (tuple of four floats): the northernmost and southernmost latitudes and
+            the easternmost and westernmost longitudes of the bounding box
     '''
     start_lat = start_coord[0]
     start_lon = start_coord[1]
@@ -45,6 +63,17 @@ def get_bounding_box(start_coord, end_coord):
 
 def get_graph(n_lat, s_lat, e_lon, w_lon): 
     '''
+    Using the bounding box, obtain an undirected graph representing the desired 
+    section of the city in which the route will take place
+    
+    Inputs:
+      n_lat (float): the northermost latitude of the bounding box
+      s_lat (float): the southernmost latitude of the bounding box
+      e_lon (float): the easternmost longitude of the bounding box
+      w_lon (float): the westernmost longitude of the bounding box
+     
+    Output:
+      A networkx graph  
     '''
     B = ox.core.graph_from_bbox(n_lat, s_lat, e_lon, w_lon, network_type= 'walk', simplify=True, \
                                 retain_all=False, truncate_by_edge=False, name='bounded', \
@@ -58,6 +87,12 @@ def get_graph(n_lat, s_lat, e_lon, w_lon):
 
 def update_edge_lengths(G, scores):
     '''
+    Update the lengths of each edge in the graph in order to weight them
+    according to their safety scores
+    
+    Inputs:
+      G (networkx graph): the graph
+      scores (dictionary): the safety score for each edge
     '''
     set_edge_dict = {}
     new_attrs = {}
@@ -70,14 +105,44 @@ def update_edge_lengths(G, scores):
     nx.set_edge_attributes(G, set_edge_dict)
 
 
-        
-        
+def edge_to_latlon_pair(G, edge):
+    '''
+    Convert an edge to the pair of (latitude, longitude) coordinates
+    corresponding to the nodes of the edge
+    
+    Inputs:
+      G (networkx graph): the graph
+      edge (networkx edge): the desired edge to convert
+    
+    Output:
+      (tuple of tuple of floats): the pair of coordinates 
+    '''
+    node1 = G.nodes[edge[0]]
+    node2 = G.nodes[edge[1]]
+    n1 = (node1['y'], node1['x'])
+    n2 = (node2['y'], node2['x'])
+    return ((n1),(n2))
+
+
 def get_path(start_coord, end_coord, G, nodes, scores):
     '''
+    Find the closest nodes to the start and the destination in the graph
+    and use them to compute the shortest weighted path in between
+    
+    Inputs:
+      start_coord (tuple of floats): the coordinates of the starting point in
+          the route
+      end_coord (tuple of floats): the coordinates of the destination of the 
+          route 
+      G (networkx graph): the graph
+      nodes (list of nodes): the list of graph nodes
+      scores (dictionary): the safety score dictionary
+    
+    Output:
+      (list of nodes) the safest path in terms of graph nodes
     '''
     update_edge_lengths(G, scores)
 
-    # find closest start_nodes
     s_min_lon_dist = 100
     s_min_lat_dist = 100
     e_min_lon_dist = 100
@@ -105,18 +170,24 @@ def get_path(start_coord, end_coord, G, nodes, scores):
     
     return path
 
-def plot_graph(path, G):
-    '''
-    '''
-    pos = nx.spring_layout(G)
-    h = G.subgraph(path)
-    nx.draw_networkx_nodes(G,pos,nodelist=path,node_color='r')
-    nx.draw_networkx_edges(G,pos=pos, edgelist = h.edges())
 
-def go(start_address, end_address, date, hour):
+def go(start_address, end_address, temp = None, precip = None):
     '''
+    Pull data from the crime database and weather information in order to 
+    compute the safety score dictionary and runs all previous code in 
+    order to find the safest route from start_address to end_address.
+    
+    Inputs:
+      start_address (string): the starting point in the route
+      end_address (string): the destination of the route
+      date (string): the desired date if provided, and the current date if not
+      hour (int): the time of day if provided, and the current time if not
+    
+    Outputs:
+      (list of lists of floats): the safest path in terms of (lat,lon) coordinates
     '''
-    temp, precip = get_current_weather()
+    if not(temp):
+        temp, precip = get_current_weather()
     start_coord, end_coord = get_coordinates(start_address, end_address)
     if start_coord == None or end_coord == None:
         return "Please Enter Valid Address"
@@ -128,32 +199,23 @@ def go(start_address, end_address, date, hour):
     
     node_dic = dict(G.nodes(data = True))
     edges_lst = [edge_to_latlon_pair(G, edge) for edge in edges]
-    # Regression_List(list_of_blocks, temp, precip, t_sens, p_sens, date, time_low, time_up) 
+    #temperature and precipitation sensitivities
     t_sens = 8
     p_sens = precip
-    time_low = hour - 1
+    time_low = hour - 2
     time_up = hour + 2
     scores = Regression_List(edges_lst, temp, precip, t_sens, p_sens, date, time_low, time_up)
-    # scores = Regression_List(edges_lst, 70, 0, 8, 1, '2019-02-26', 20, 24)
-    # scores = get score dictionary from G or use sample from google docs
     
     path = get_path(start_coord, end_coord, G, nodes, scores)
     
     path_coords = []
+    path_coords.append(start_coord)
     for node in path:
         coord_list = []
         lat = G.nodes[node]['y']
         lon = G.nodes[node]['x']
         coord_list = [lat, lon]
         path_coords.append(coord_list)
+    path_coords.append(end_coord)
 
     return path_coords
-
-def edge_to_latlon_pair(G, edge):
-    '''
-    '''
-    node1 = G.nodes[edge[0]]
-    node2 = G.nodes[edge[1]]
-    n1 = (node1['y'], node1['x'])
-    n2 = (node2['y'], node2['x'])
-    return ((n1),(n2))
