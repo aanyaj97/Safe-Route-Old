@@ -1,5 +1,6 @@
 import csv
 import os
+import datetime
 
 from django.shortcuts import render
 from django import forms
@@ -21,9 +22,9 @@ class AddressEntry(forms.Form):
     	label= "Date of Travel",
     	help_text= "e.g. 10/10/2010 14:30",
     	required=False)
-    time_of_travel = forms.TimeField(
+    hour_of_travel = forms.TimeField(
     	label= "Date of Travel",
-    	help_text= "e.g. 14:30",
+    	help_text= "e.g. 14",
     	required=False)
 
 
@@ -36,9 +37,12 @@ def plot_route(request):
         address_form = AddressEntry(request.GET)
         route_info['response'] = address_form
         if address_form.is_valid():
-
-            route = go(address_form.start_address, address_form.end_address,\
-                       address_form.date_of_travel)
+            start = address_form.cleaned_data['start_address']
+            end = address_form.cleaned_data['end_address']
+            current_DT = datetime.datetime.now()
+            date_string = current_DT.strftime('%Y-%m-%d')
+            time_string = current_DT.hour
+            route = go(start, end, date_string, time_string)
     route_info['route'] = route
     route_info['address_form'] = address_form
 
