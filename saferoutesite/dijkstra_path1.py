@@ -3,6 +3,7 @@ import networkx as nx
 import geopy.geocoders
 from geopy.geocoders import Nominatim
 from SQLRequest3 import Regression_List 
+from current_weather import get_current_weather
 
 #sample_end_address = '5807 S Woodlawn Ave'
 #sample_start_address = '5481 S Maryland Ave'
@@ -112,9 +113,10 @@ def plot_graph(path, G):
     nx.draw_networkx_nodes(G,pos,nodelist=path,node_color='r')
     nx.draw_networkx_edges(G,pos=pos, edgelist = h.edges())
 
-def go(start_address, end_address, temp, precip, date, hour):
+def go(start_address, end_address, date, hour):
     '''
     '''
+    temp, precip = get_current_weather()
     start_coord, end_coord = get_coordinates(start_address, end_address)
     if start_coord == None or end_coord == None:
         return "Please Enter Valid Address"

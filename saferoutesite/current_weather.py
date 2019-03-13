@@ -68,6 +68,8 @@ def url_to_html(url):
     return html
 
 def get_current_weather():
+    '''
+    '''
     html = url_to_html('https://w1.weather.gov/data/obhistory/KMDW.html')
     soup = bs4.BeautifulSoup(html, "html5lib")
     table_tags = soup.find_all('table')
