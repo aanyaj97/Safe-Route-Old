@@ -7,8 +7,12 @@ from current_weather import get_current_weather
    
 def get_coordinates(start_address, end_address):
     '''
+<<<<<<< HEAD
     Obtain (latitude, longitude) pairs from desired starting and ending 
     addresses
+=======
+    Obtain (latitude, longitude) pairs from desired starting and ending addresses
+>>>>>>> 7db6dbab5e1e8bd69f072ea2d11b2eb2ba4d915e
     
     Inputs:
       start_address (string): the starting point in the route
@@ -18,9 +22,12 @@ def get_coordinates(start_address, end_address):
       (tuple of tuples of floats): the coordinate pairs for the starting and
           ending addresses
     '''
+<<<<<<< HEAD
     geolocator = Nominatim(user_agent="saferoute",\
                            format_string="%s, Chicago IL")
-
+=======
+    geolocator = Nominatim(user_agent="saferoute", format_string="%s, Chicago IL")
+>>>>>>> 7db6dbab5e1e8bd69f072ea2d11b2eb2ba4d915e
     start_loc = geolocator.geocode(start_address)
     end_loc = geolocator.geocode(end_address)
     start_coord = (start_loc.latitude, start_loc.longitude)
@@ -39,8 +46,13 @@ def get_bounding_box(start_coord, end_coord):
           route
      
     Output:
+<<<<<<< HEAD
+        (tuple of four floats): the northernmost and southernmost latitudes 
+        and the easternmost and westernmost longitudes of the bounding box
+=======
         (tuple of four floats): the northernmost and southernmost latitudes and
             the easternmost and westernmost longitudes of the bounding box
+>>>>>>> 7db6dbab5e1e8bd69f072ea2d11b2eb2ba4d915e
     '''
     start_lat = start_coord[0]
     start_lon = start_coord[1]
@@ -78,6 +90,7 @@ def get_graph(n_lat, s_lat, e_lon, w_lon):
     Output:
       A networkx graph  
     '''
+<<<<<<< HEAD
     B = ox.core.graph_from_bbox(n_lat, s_lat, e_lon, w_lon,\
                                 network_type= 'walk', simplify=True,\
                                 retain_all=False, truncate_by_edge=False,\
@@ -86,6 +99,12 @@ def get_graph(n_lat, s_lat, e_lon, w_lon):
                                 clean_periphery=True,\
                                 infrastructure='way["highway"]',\
                                 custom_filter=None)
+=======
+    B = ox.core.graph_from_bbox(n_lat, s_lat, e_lon, w_lon, network_type= 'walk', simplify=True, \
+                                retain_all=False, truncate_by_edge=False, name='bounded', \
+                                timeout=180, memory=None, max_query_area_size=2500000000, \
+                                clean_periphery=True, infrastructure='way["highway"]', custom_filter=None)
+>>>>>>> 7db6dbab5e1e8bd69f072ea2d11b2eb2ba4d915e
     
     B_undirected = ox.save_load.get_undirected(B)
     
@@ -216,14 +235,21 @@ def go(start_address, end_address, temp = None, precip = None):
     path = get_path(start_coord, end_coord, G, nodes, scores)
     
     path_coords = []
+<<<<<<< HEAD
     path_coords.append([start_coord[0],start_coord[1]])
+=======
+    path_coords.append(start_coord)
+>>>>>>> 7db6dbab5e1e8bd69f072ea2d11b2eb2ba4d915e
     for node in path:
         coord_list = []
         lat = G.nodes[node]['y']
         lon = G.nodes[node]['x']
         coord_list = [lat, lon]
         path_coords.append(coord_list)
+<<<<<<< HEAD
     path_coords.append([end_coord[0],end_coord[1]])
-
+=======
+    path_coords.append(end_coord)
+>>>>>>> 7db6dbab5e1e8bd69f072ea2d11b2eb2ba4d915e
 
     return path_coords
