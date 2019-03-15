@@ -1,15 +1,5 @@
-
-# coding: utf-8
-
-# In[46]:
-
-
-import urllib.parse
 import requests
-import os
 import bs4
-import pandas as pd
-from bs4 import BeautifulSoup
 
 #The following two functions are from util.py in PA2
 def get_request(url):
@@ -59,6 +49,7 @@ def url_to_html(url):
     Outputs:
         Tuple of associated url (string) and html (string)
     '''
+    
     req = get_request(url)
     if req is None:
         return None
@@ -67,9 +58,16 @@ def url_to_html(url):
         return None
     return html
 
+
 def get_current_weather():
     '''
+    Retrieves most recent weather from Midway Airport.
+    Inputs:
+        None 
+    Outputs:
+        Tuple of (Temperature, Precipitation)
     '''
+    
     html = url_to_html('https://w1.weather.gov/data/obhistory/KMDW.html')
     soup = bs4.BeautifulSoup(html, "html5lib")
     table_tags = soup.find_all('table')
